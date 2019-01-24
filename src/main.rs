@@ -1,19 +1,19 @@
 #![deny(warnings)]
-#[macro_use]
-extern crate log;
 
+extern crate dotenv;
 extern crate futures;
+extern crate futures_locks;
 extern crate hyper;
 extern crate hyper_tls;
+#[macro_use]
+extern crate log;
 extern crate mysql_async as my;
+extern crate pretty_env_logger;
 extern crate serde;
-extern crate tokio;
-extern crate warp;
 #[macro_use]
 extern crate serde_json;
-extern crate dotenv;
-
-extern crate pretty_env_logger;
+extern crate tokio;
+extern crate warp;
 
 mod db;
 mod errors;
@@ -26,7 +26,7 @@ use std::env;
 use std::sync::Arc;
 
 pub(crate) use crate::errors::Error;
-pub(crate) use crate::types::{ConnPool, MyFutureConn};
+pub(crate) use crate::types::MyFutureConn;
 
 use futures::Future;
 use hyper::client::HttpConnector;
@@ -48,8 +48,7 @@ fn database_pool_injector_factory(
         db::create_connection_pool(env::var("DATABASE_URL").expect("Must provide DATABASE_URL"));
 
     warp::any()
-        .map(move || pool.clone())
-        .and_then(|pool: ConnPool| {
+        .and_then(move || {
             pool.lock()
                 .map(|pool| pool.get_conn())
                 .map_err(|_| warp::reject::custom(Error::Database))

@@ -1,10 +1,11 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use my;
 use my::prelude::*;
 use my::Opts;
 
 use futures::Future;
+use futures_locks::Mutex;
 
 use crate::MyFutureConn;
 

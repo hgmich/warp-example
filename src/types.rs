@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use my;
 
@@ -6,8 +6,6 @@ use futures::Future;
 use hyper::client::HttpConnector;
 use hyper::Client;
 use hyper_tls::HttpsConnector;
-
-pub(crate) type ConnPool = Arc<Mutex<my::Pool>>;
 
 pub(crate) trait FutureResponse<T>: Future<Item = T, Error = warp::Rejection> {}
 
