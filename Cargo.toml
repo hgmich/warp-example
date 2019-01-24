@@ -1,0 +1,18 @@
+[package]
+name = "warp-example"
+version = "0.1.0"
+authors = ["Michael Holmes <michael.holmes@protonmail.ch>"]
+edition = "2018"
+
+[dependencies]
+warp = "0.1"
+mysql_async = "0.16"
+futures = "0.1"
+tokio = "0.1"
+log = "0.4"
+pretty_env_logger = "0.3"
+hyper = "0.12"
+hyper-tls = "0.3"
+serde = "1"
+serde_json = "1"
+dotenv = "0.13"
