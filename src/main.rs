@@ -43,7 +43,7 @@ const SERVER_NAME: &str = concat!(
 );
 
 fn database_pool_injector_factory(
-) -> BoxedFilter<(impl Future<Item = my::Conn, Error = my::errors::Error>,)> {
+) -> BoxedFilter<(impl Future<Item = my::Conn, Error = my::error::Error>,)> {
     let pool =
         db::create_connection_pool(env::var("DATABASE_URL").expect("Must provide DATABASE_URL"));
 
