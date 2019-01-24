@@ -36,7 +36,7 @@ use hyper_tls::HttpsConnector;
 use warp::filters::BoxedFilter;
 use warp::{Filter, Reply};
 
-const SERVER_NAME: &'static str = concat!(
+const SERVER_NAME: &str = concat!(
     env!("CARGO_PKG_NAME"),
     "/",
     env!("CARGO_PKG_VERSION")

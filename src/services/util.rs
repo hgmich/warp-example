@@ -19,6 +19,7 @@ pub(crate) fn health_check() -> impl warp::Reply {
     warp::reply::json(&json!({"status": "alive"}))
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub(crate) fn extern_http(http_client: HttpClientRef) -> BoxedFutureResponse<(impl warp::Reply)> {
     let uri = "https://jsonplaceholder.typicode.com/todos/1"
         .parse()

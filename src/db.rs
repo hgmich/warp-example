@@ -18,7 +18,7 @@ pub(crate) fn get_database_version(future_conn: impl MyFutureConn) -> impl my::M
         .and_then(|result| result.collect_and_drop())
         .map(|(_, rows): (my::Conn, Vec<String>)| {
             rows.get(0)
-                .map(|s| s.clone())
-                .unwrap_or_else(|| String::new())
+                .cloned()
+                .unwrap_or_default()
         })
 }
