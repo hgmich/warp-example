@@ -5,15 +5,21 @@ extern crate futures;
 extern crate futures_locks;
 extern crate hyper;
 extern crate hyper_tls;
-#[macro_use]
 extern crate log;
+#[macro_use]
+extern crate slog;
+extern crate slog_async;
+#[macro_use]
+extern crate slog_scope;
+extern crate slog_stdlog;
+extern crate slog_term;
 extern crate mysql_async as my;
-extern crate pretty_env_logger;
 extern crate serde;
 #[macro_use]
 extern crate serde_json;
 extern crate tokio;
 extern crate warp;
+extern crate time;
 
 mod db;
 mod errors;
@@ -35,6 +41,8 @@ use hyper::Client;
 use hyper_tls::HttpsConnector;
 use warp::filters::BoxedFilter;
 use warp::{Filter, Reply};
+use std::net::SocketAddr;
+use warp::log::Info;
 
 const SERVER_NAME: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -91,24 +99,57 @@ fn global_headers() -> HeaderMap {
     headers
 }
 
+fn setup_logging() -> slog_scope::GlobalLoggerGuard {
+    use slog::Drain;
+
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let log = slog::Logger::root(drain,
+                                 slog_o!(
+                                    "version" => env!("CARGO_PKG_VERSION"),
+                                    "app" => env!("CARGO_PKG_NAME")
+                                 )
+    );
+
+    slog_scope::set_global_logger(log)
+}
+
+fn request_logger(info: Info) {
+    info!("Handled request";
+        "method" => info.method().as_str(),
+        "path" => info.path(),
+        "status" => info.status().as_u16()
+    );
+}
+
+fn start(listen_addr: SocketAddr) {
+    info!("Booting application";
+        "started_at" => format!("{}", time::now().rfc3339()),
+        "listen_addr" => format!("{}", &listen_addr)
+    );
+
+    let routes = router()
+        .with(warp::reply::with::headers(global_headers()))
+        .with(warp::filters::log::custom(request_logger));
+
+    tokio::run(warp::serve(routes).bind(listen_addr));
+}
+
 fn main() {
     use std::net::ToSocketAddrs;
 
     dotenv::dotenv().expect("Failed to init dotenv");
 
-    pretty_env_logger::init();
+    let _guard = setup_logging();
+    let _stdlog_guard = slog_stdlog::init().unwrap();
 
-    let routes = router()
-        .with(warp::reply::with::headers(global_headers()));
+    let listen_addr = env::var("LISTEN_HOST")
+        .expect("Must provide LISTEN_HOST")
+        .to_socket_addrs()
+        .expect("Must provide valid HOST:PORT value for LISTEN_HOST")
+        .next()
+        .expect("Could not resolve hostname in LISTEN_HOST");
 
-    tokio::run(
-        warp::serve(routes).bind(
-            env::var("LISTEN_HOST")
-                .expect("Must provide LISTEN_HOST")
-                .to_socket_addrs()
-                .expect("Must provide valid HOST:PORT value for LISTEN_HOST")
-                .next()
-                .expect("Could not resolve hostname in LISTEN_HOST"),
-        ),
-    );
+    start(listen_addr)
 }

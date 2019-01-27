@@ -1,6 +1,7 @@
 use futures::Future;
+use my;
 
-use crate::helpers::response_to_json;
+use crate::helpers::{log_database_error, response_to_json};
 use crate::types::{BoxedFutureResponse, HttpClientRef};
 use crate::{Error, MyFutureConn};
 
@@ -8,8 +9,8 @@ pub(crate) fn mysql_ver_route(conn: impl MyFutureConn) -> BoxedFutureResponse<(i
     Box::new(
         crate::db::get_database_version(conn)
             .map(|ver| warp::reply::json(&json!({ "version": ver })))
-            .map_err(|db_err| {
-                error!("database error: {}", db_err);
+            .map_err(|db_err: my::error::Error| {
+                log_database_error(db_err);
                 warp::reject::custom(Error::Database)
             }),
     )
