@@ -5,7 +5,7 @@ use crate::helpers::{log_database_error, response_to_json};
 use crate::types::{BoxedFutureResponse, HttpClientRef};
 use crate::{Error, MyFutureConn};
 
-pub(crate) fn mysql_ver_route(conn: impl MyFutureConn) -> BoxedFutureResponse<(impl warp::Reply)> {
+pub(crate) fn mysql_ver_route(conn: impl MyFutureConn) -> BoxedFutureResponse<impl warp::Reply> {
     Box::new(
         crate::db::get_database_version(conn)
             .map(|ver| warp::reply::json(&json!({ "version": ver })))
@@ -21,7 +21,7 @@ pub(crate) fn health_check() -> impl warp::Reply {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub(crate) fn extern_http(http_client: HttpClientRef) -> BoxedFutureResponse<(impl warp::Reply)> {
+pub(crate) fn extern_http(http_client: HttpClientRef) -> BoxedFutureResponse<impl warp::Reply> {
     let uri = "https://jsonplaceholder.typicode.com/todos/1"
         .parse()
         .expect("URI should be valid!");
