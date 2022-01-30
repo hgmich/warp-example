@@ -32,9 +32,10 @@ pub(crate) fn log_database_error(error: MysqlError) {
                 "message" => format!("{}", drv_err),
                 "object" => format!("{:?}", drv_err)
             );
-        },
+        }
         MysqlError::Io(io_err) => {
-            io_err.raw_os_error()
+            io_err
+                .raw_os_error()
                 .map(|errno| {
                     error!("database connection I/O error (system)";
                         "fault" => "database",
@@ -55,12 +56,12 @@ pub(crate) fn log_database_error(error: MysqlError) {
 
                     None
                 });
-        },
+        }
         _ => error!("database error";
             "fault" => "database",
             "source" => "unknown",
             "message" => format!("{}", error),
             "object" => format!("{:?}", error)
-        )
+        ),
     }
 }

@@ -11,21 +11,21 @@ extern crate slog;
 extern crate slog_async;
 #[macro_use]
 extern crate slog_scope;
-extern crate slog_stdlog;
-extern crate slog_term;
 extern crate mysql_async as my;
 extern crate serde;
+extern crate slog_stdlog;
+extern crate slog_term;
 #[macro_use]
 extern crate serde_json;
+extern crate time;
 extern crate tokio;
 extern crate warp;
-extern crate time;
 
 mod db;
 mod errors;
+mod helpers;
 mod services;
 mod types;
-mod helpers;
 
 use std::env;
 
@@ -39,16 +39,12 @@ use hyper::client::HttpConnector;
 use hyper::header::{HeaderMap, HeaderValue};
 use hyper::Client;
 use hyper_tls::HttpsConnector;
-use warp::filters::BoxedFilter;
-use warp::{Filter, Reply};
 use std::net::SocketAddr;
+use warp::filters::BoxedFilter;
 use warp::log::Info;
+use warp::{Filter, Reply};
 
-const SERVER_NAME: &str = concat!(
-    env!("CARGO_PKG_NAME"),
-    "/",
-    env!("CARGO_PKG_VERSION")
-);
+const SERVER_NAME: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 fn database_pool_injector_factory(
 ) -> BoxedFilter<(impl Future<Item = my::Conn, Error = my::error::Error>,)> {
@@ -72,8 +68,6 @@ fn http_client_injector_factory() -> BoxedFilter<(Arc<Client<HttpsConnector<Http
 }
 
 fn router() -> BoxedFilter<(impl Reply,)> {
-    use warp::Filter;
-
     let database_pool_injector = database_pool_injector_factory();
     let http_client_injector = http_client_injector_factory();
 
@@ -105,11 +99,12 @@ fn setup_logging() -> slog_scope::GlobalLoggerGuard {
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
-    let log = slog::Logger::root(drain,
-                                 slog_o!(
-                                    "version" => env!("CARGO_PKG_VERSION"),
-                                    "app" => env!("CARGO_PKG_NAME")
-                                 )
+    let log = slog::Logger::root(
+        drain,
+        slog_o!(
+           "version" => env!("CARGO_PKG_VERSION"),
+           "app" => env!("CARGO_PKG_NAME")
+        ),
     );
 
     slog_scope::set_global_logger(log)

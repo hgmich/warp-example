@@ -16,4 +16,5 @@ pub(crate) trait MyFutureConn: my::MyFuture<my::Conn> {}
 impl<F> MyFutureConn for F where F: my::MyFuture<my::Conn> {}
 
 pub(crate) type HttpClientRef = Arc<Client<HttpsConnector<HttpConnector>>>;
-pub(crate) type BoxedFutureResponse<T> = Box<(Future<Item = T, Error = warp::Rejection> + Send)>;
+pub(crate) type BoxedFutureResponse<T> =
+    Box<(dyn Future<Item = T, Error = warp::Rejection> + Send)>;
